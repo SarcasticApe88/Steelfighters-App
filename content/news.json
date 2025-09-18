@@ -1,0 +1,14 @@
+[
+  {
+    "id": "n1",
+    "date": "2025-09-18",
+    "title": "Willkommen bei den Steelfighters!",
+    "body": "Dies ist ein Beispiel-News-Eintrag. Bearbeite die Datei content/news.json um News zu aktualisieren."
+  },
+  {
+    "id": "n2",
+    "date": "2025-09-18",
+    "title": "App-Update",
+    "body": "Die Teamseiten laden jetzt Daten aus config.json. Tippe oben auf 'Aktualisieren'."
+  }
+]

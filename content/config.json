@@ -1,0 +1,14 @@
+{
+  "teams": {
+    "A": {
+      "table": "https://2k-dart-software.com/frontend/events/10/event/233/table",
+      "gamesAndRoster": "https://2k-dart-software.com/frontend/events/10/event/233/participants/7574",
+      "participants": "https://2k-dart-software.com/frontend/events/10/event/233/participants"
+    },
+    "B": {
+      "table": "https://2k-dart-software.com/frontend/events/10/event/244/table",
+      "gamesAndRoster": "https://2k-dart-software.com/frontend/events/10/event/244/participants/5385",
+      "participants": "https://2k-dart-software.com/frontend/events/10/event/244/participants"
+    }
+  }
+}
