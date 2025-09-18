@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Steelfighters</title>
 
+  <!-- iOS/PWA basics -->
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -9,473 +13,336 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <link rel="manifest" href="manifest.json">
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steelfighters App</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#111; color:#fff; }
-    header { background:#000; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; }
-    header h1 { font-size:18px; margin:0; }
-    .content { display:none; padding:20px; }
-    .content.show { display:block; }
-    .list { display:flex; flex-direction:column; gap:12px; align-items:center; }
-    .item { background:#222; padding:16px; border-radius:12px; text-align:center; cursor:pointer; font-size:16px; width:100%; max-width:420px; }
-    .item:active { filter:brightness(1.1); }
-    .back { margin-bottom:15px; cursor:pointer; display:inline-block; }
-    .iframe-wrap { margin-top:10px; border:1px solid #333; border-radius:12px; overflow:hidden; }
-    .iframe-wrap iframe { width:100%; height:70vh; border:0; background:#000; }
-    a.ext { color:#9cf; text-decoration:underline; }
-  .btn{display:inline-block}
-</style>
+    :root { --bg:#111; --fg:#fff; --muted:#bbb; --card:#222; --accent:#1877f2; --ok:#16a34a; --bad:#dc2626; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg) }
+
+    /* Header */
+    header{ position:sticky; top:0; z-index:5; background:#000; display:grid; grid-template-columns:48px 1fr 120px; align-items:center; gap:6px; padding:10px 8px; }
+    .h-btn{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; background:#1a1a1a; cursor:pointer; user-select:none; }
+    .h-title{ text-align:center; font-weight:700; }
+    .h-right{ text-align:right; }
+    .btn{ background:var(--accent); color:#fff; border:none; padding:10px 12px; border-radius:10px; cursor:pointer; }
+    .ghost{ background:#1f2937; border:1px solid #374151; }
+
+    /* Views */
+    .content{ display:none; padding:18px; }
+    .content.show{ display:block; }
+    .list{ display:flex; flex-direction:column; gap:12px; align-items:center; }
+    .item{ background:var(--card); width:100%; max-width:420px; padding:16px; border-radius:14px; text-align:center; font-size:16px; cursor:pointer; }
+    .back{ display:inline-block; margin-bottom:10px; cursor:pointer; color:var(--muted) }
+
+    /* Training: Double */
+    .bar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0 14px }
+    select, input[type=number]{ background:#181818; color:#fff; border:1px solid #333; border-radius:10px; padding:10px; }
+    .stat{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:8px 0 14px }
+    .stat .box{ background:#0f172a; border:1px solid #1f2937; padding:10px; border-radius:12px; text-align:center; }
+    .pad{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+    .hit{ background:var(--ok); color:#fff; font-size:18px; padding:24px 14px; border-radius:16px; border:none; }
+    .miss{ background:var(--bad); color:#fff; font-size:18px; padding:24px 14px; border-radius:16px; border:none; }
+    .undo{ background:#374151; color:#fff; border:none; padding:10px 12px; border-radius:10px; }
+    .note{ color:var(--muted); font-size:13px; }
+
+    /* iFrame wrapper */
+    .iframe-wrap{ margin-top:10px; border:1px solid #333; border-radius:12px; overflow:hidden; }
+    .iframe-wrap iframe{ width:100%; height:70vh; border:0; background:#000; }
+    a.ext{ color:#9cf }
+  </style>
 </head>
 <body>
+
 <header>
-  <h1>Steelfighters</h1><button id="refresh_btn" style="background:#1877f2;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer">Aktualisieren</button>
-  <div style="font-size:22px">☰</div>
+  <!-- links: Menü-Icon öffnet immer das Hauptmenü -->
+  <div class="h-btn" id="menuBtn" title="Menü">☰</div>
+
+  <!-- Mitte: Titel -->
+  <div class="h-title">Steelfighters</div>
+
+  <!-- rechts: Aktualisieren -->
+  <div class="h-right">
+    <button class="btn" id="refreshBtn">Aktualisieren</button>
+  </div>
 </header>
 
-<!-- Hauptmenü -->
-<div id="home" class="content">
-  <h2>Hauptmenü</h2>
+<!-- HOME -->
+<div id="home" class="content show">
   <div class="list">
-    <div class="item" onclick="showView('teamA')">Steelfighters A</div>
-    <div class="item" onclick="showView('settings')">Einstellungen</div>
-    <div class="item" onclick="showView('teamB')">Steelfighters B</div>
     <div class="item" onclick="showView('news')">News</div>
-    <div class="item" onclick="showView('training')">Training    <div class="item" onclick="showView('data')">Daten & Upload
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
-    </div>
+    <div class="item" onclick="showView('teamA')">Steelfighters A</div>
+    <div class="item" onclick="showView('teamB')">Steelfighters B</div>
+    <div class="item" onclick="showView('training')">Training</div>
+    <div class="item" onclick="showView('settings')">Einstellungen</div>
   </div>
 </div>
 
-
-<!-- Daten & Upload -->
-<div id="data" class="content">
+<!-- NEWS -->
+<div id="news" class="content">
   <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>Daten & Upload</h2>
-  <div class="list">
-    <div class="item" style="cursor:default">
-      <div style="font-weight:600;margin-bottom:6px">Export der Trainingsdaten</div>
-      <p style="opacity:.85;margin:6px 0">Exportiert alle lokalen Trainingsdaten (Scoring, Double, Checkout, ATC, Sessions) als JSON-Datei.</p>
-      <button class="btn" onclick="exportStats()" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;width:100%;max-width:420px">Export (.json herunterladen)</button>
-      <div style="height:8px"></div>
-      <button class="btn" onclick="shareStats()" style="background:#2a2a2a;color:#fff;border:1px solid #444;padding:10px 12px;border-radius:8px;cursor:pointer;width:100%;max-width:420px">Teilen (WhatsApp / Mail)</button>
-    </div>
-
-    <div class="item" style="cursor:default">
-      <div style="font-weight:600;margin-bottom:6px">Upload-Link (für Trainer)</div>
-      <p style="opacity:.85;margin:6px 0">Hier kannst du einen <b>Dropbox File Request</b>-Link oder beliebigen Upload-Link hinterlegen. Tippe auf „Jetzt hochladen“, um den Export dort abzugeben.</p>
-      <input id="upload_url" type="url" placeholder="https://www.dropbox.com/request/..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="saveUploadUrl()" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">Speichern</button>
-        <button class="btn" onclick="uploadNow()" style="background:#2a2a2a;color:#fff;border:1px solid #444;padding:10px 12px;border-radius:8px;cursor:pointer">Jetzt hochladen (Dropbox File Request)</button>
-      <button class="btn" onclick="oneClickUpload()" style="background:#0fa;color:#111;padding:10px 12px;border-radius:8px;cursor:pointer">1‑Klick Upload (API)</button>
-      </div>
-      <p id="upload_hint" style="opacity:.8;margin-top:8px"></p>
-    </div>
-
-    <div class="item" style="cursor:default">
-      <div style="font-weight:600;margin-bottom:6px">Import (Trainer)</div>
-      <p style="opacity:.85;margin:6px 0">JSON-Datei laden und in die lokalen Daten integrieren (z. B. vom Spieler erhalten).</p>
-      <input type="file" id="import_json" accept="application/json" style="width:100%">
-    
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
-    </div>
-  </div>
+  <div id="news_list"><p class="note">Keine News geladen.</p></div>
 </div>
 
-<!-- Team A -->
+<!-- TEAM A -->
 <div id="teamA" class="content">
   <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>Steelfighters A</h2>
   <div class="list">
     <div class="item" onclick="showView('teamA_tabelle')">Tabelle</div>
     <div class="item" onclick="showView('teamA_spieltage_kader')">Spieltage & Kader</div>
-    <div class="item" onclick="showView('teamA_gegner')">Gegner
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
-    </div>
+    <div class="item" onclick="showView('teamA_gegner')">Gegner</div>
   </div>
 </div>
-
 <div id="teamA_tabelle" class="content">
   <div class="back" onclick="showView('teamA')">← Zurück</div>
-  <h2>Tabelle A</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/233/table" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/table" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/table" target="_blank">Im Browser öffnen</a></p>
 </div>
-
 <div id="teamA_spieltage_kader" class="content">
   <div class="back" onclick="showView('teamA')">← Zurück</div>
-  <h2>Spieltage & Kader A</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/233/participants/7574" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/participants/7574" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/participants/7574" target="_blank">Im Browser öffnen</a></p>
 </div>
-
 <div id="teamA_gegner" class="content">
   <div class="back" onclick="showView('teamA')">← Zurück</div>
-  <h2>Gegner A</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/233/participants" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/participants" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/233/participants" target="_blank">Im Browser öffnen</a></p>
 </div>
 
-<!-- Team B -->
+<!-- TEAM B -->
 <div id="teamB" class="content">
   <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>Steelfighters B</h2>
   <div class="list">
     <div class="item" onclick="showView('teamB_tabelle')">Tabelle</div>
     <div class="item" onclick="showView('teamB_spieltage_kader')">Spieltage & Kader</div>
-    <div class="item" onclick="showView('teamB_gegner')">Gegner
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
-    </div>
+    <div class="item" onclick="showView('teamB_gegner')">Gegner</div>
   </div>
 </div>
-
 <div id="teamB_tabelle" class="content">
   <div class="back" onclick="showView('teamB')">← Zurück</div>
-  <h2>Tabelle B</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/244/table" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/table" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/table" target="_blank">Im Browser öffnen</a></p>
 </div>
-
 <div id="teamB_spieltage_kader" class="content">
   <div class="back" onclick="showView('teamB')">← Zurück</div>
-  <h2>Spieltage & Kader B</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/244/participants/5385" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/participants/5385" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/participants/5385" target="_blank">Im Browser öffnen</a></p>
 </div>
-
 <div id="teamB_gegner" class="content">
   <div class="back" onclick="showView('teamB')">← Zurück</div>
-  <h2>Gegner B</h2>
   <div class="iframe-wrap">
     <iframe src="https://2k-dart-software.com/frontend/events/10/event/244/participants" referrerpolicy="no-referrer"></iframe>
   </div>
-  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/participants" target="_blank" rel="noopener">Im Browser öffnen</a></p>
+  <p><a class="ext" href="https://2k-dart-software.com/frontend/events/10/event/244/participants" target="_blank">Im Browser öffnen</a></p>
 </div>
 
-<!-- News -->
-
-<div id="news" class="content">
-  <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>News</h2>
-  <div id="news_list"><p>Keine News geladen.</p></div>
-</div>
-
-
-<!-- Training -->
+<!-- TRAINING -->
 <div id="training" class="content">
   <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>Training</h2>
   <div class="list">
-    <div class="item" onclick="alert('Platzhalter: Scoring (Einzelzahl)')">Scoring (Einzelzahl)</div>
-    <div class="item" onclick="alert('Platzhalter: Scoring (frei)')">Scoring (frei)</div>
-    <div class="item" onclick="alert('Platzhalter: Double-Training)')">Double-Training</div>
-    <div class="item" onclick="alert('Platzhalter: Checkout')">Checkout 41–170</div>
-    <div class="item" onclick="alert('Platzhalter: ATC')">Around the Clock
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
-    </div>
+    <div class="item" onclick="showView('train_double')">Double-Training</div>
+    <div class="item" onclick="alert('Scoring (Einzelzahl) – folgt')">Scoring (Einzelzahl)</div>
+    <div class="item" onclick="alert('Scoring (frei) – folgt')">Scoring (frei)</div>
+    <div class="item" onclick="alert('Checkout – folgt')">Checkout 41–170</div>
+    <div class="item" onclick="alert('Around the Clock – folgt')">Around the Clock</div>
   </div>
 </div>
 
-<script>
-function showView(id){
-  document.querySelectorAll('.content').forEach(el=> el.classList.remove('show'));
-  document.getElementById(id).classList.add('show');
-}
-window.addEventListener('DOMContentLoaded', ()=>{ showView('home'); });
-</script>
+<!-- TRAINING: DOUBLE -->
+<div id="train_double" class="content">
+  <div class="back" onclick="showView('training')">← Zurück</div>
 
-<!-- Einstellungen -->
+  <div class="bar">
+    <label>Ziel-Double:&nbsp;
+      <select id="dbl_target">
+        <option value="D20">D20</option>
+        <option value="D16">D16</option>
+        <option value="D12">D12</option>
+        <option value="D10">D10</option>
+        <option value="D8">D8</option>
+        <option value="D6">D6</option>
+        <option value="D4">D4</option>
+        <option value="D2">D2</option>
+        <option value="DBull">D-Bull</option>
+        <option value="(frei)">(frei)</option>
+      </select>
+    </label>
+
+    <label>Darts:&nbsp;
+      <select id="dbl_darts">
+        <option value="30">30</option>
+        <option value="60">60</option>
+        <option value="90">90</option>
+      </select>
+    </label>
+
+    <button class="btn" id="dbl_start">Start</button>
+    <button class="ghost" id="dbl_reset">Reset</button>
+  </div>
+
+  <div class="stat">
+    <div class="box"><div class="note">Verbleibend</div><div id="dbl_left" style="font-weight:700">0</div></div>
+    <div class="box"><div class="note">Treffer</div><div id="dbl_hits" style="font-weight:700">0</div></div>
+    <div class="box"><div class="note">Fehler</div><div id="dbl_miss" style="font-weight:700">0</div></div>
+    <div class="box"><div class="note">Quote</div><div id="dbl_rate" style="font-weight:700">0%</div></div>
+  </div>
+
+  <div class="pad">
+    <button class="hit" id="dbl_btn_hit">HIT</button>
+    <button class="miss" id="dbl_btn_miss">MISS</button>
+  </div>
+
+  <div style="display:flex;gap:8px; margin-top:12px">
+    <button class="undo" id="dbl_undo">Undo</button>
+    <button class="ghost" id="dbl_save">Session speichern</button>
+  </div>
+
+  <p class="note" id="dbl_status">Bereit.</p>
+</div>
+
+<!-- EINSTELLUNGEN (nur JSON-Links; simpel) -->
 <div id="settings" class="content">
   <div class="back" onclick="showView('home')">← Zurück</div>
-  <h2>Einstellungen</h2>
+  <p class="note">Hier kannst du die Remote-Quellen eintragen (optional). Wenn leer, bleiben die eingebauten Links aktiv.</p>
   <div class="list" style="align-items:stretch">
     <div class="item" style="cursor:default">
-      <h3 style="margin:0 0 8px 0">Remote-Inhalte</h3>
-      <label>Config JSON URL (Team-Links)</label>
-      <input id="cfg_url" type="url" placeholder="https://.../config.json" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
+      <label>Config JSON URL</label>
+      <input id="cfg_url" type="url" placeholder="https://.../config.json" style="width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#181818;color:#fff">
       <label>News JSON URL</label>
-      <input id="news_url" type="url" placeholder="https://.../news.json" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_urls" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">Speichern</button>
-        <button class="btn" id="load_now" style="background:#2a2a2a;color:#fff;border:1px solid #444;padding:10px 12px;border-radius:8px;cursor:pointer">Jetzt laden</button>
-      </div>
-      <p id="load_status" style="opacity:.8;margin-top:8px"></p>
-    
-      <hr style="border:none;border-top:1px solid #333;margin:16px 0">
-      <h3 style="margin:0 0 8px 0">Upload‑API (1‑Klick Upload)</h3>
-      <label>Upload API URL (POST)</label>
-      <input id="api_url" type="url" placeholder="https://example.com/upload" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <label>Auth Header (optional, z. B. Bearer ...)</label>
-      <input id="api_auth" type="text" placeholder="Bearer xxx" style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#181818;color:#fff">
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save_api" style="background:#1877f2;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer">API speichern</button>
-      </div>
+      <input id="news_url" type="url" placeholder="https://.../news.json" style="width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#181818;color:#fff">
+      <div style="height:10px"></div>
+      <button class="btn" id="save_urls">Speichern</button>
     </div>
   </div>
 </div>
 
-
 <script>
-// ---- Remote content (config & news) ----
-const CFG_KEY='sf_cfg_urls_v1', DATA_KEY='sf_cached_data_v1';
-let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || '{"configUrl":"content/config.json","newsUrl":"content/news.json"}');
-let DATA = JSON.parse(localStorage.getItem(DATA_KEY) || '{"config":null,"news":null,"ts":0}');
+/* ---------- Navigation ---------- */
+function showView(id){
+  document.querySelectorAll('.content').forEach(e=>e.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+document.getElementById('menuBtn').onclick = ()=> showView('home');
 
+/* ---------- Remote (optional) ---------- */
+const CFG_KEY='sf_cfg_urls_v1', DATA_KEY='sf_cached_data_v1';
+let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || '{"configUrl":"","newsUrl":""}');
+let DATA = JSON.parse(localStorage.getItem(DATA_KEY) || '{"config":null,"news":null,"ts":0}');
 function saveCfg(){ localStorage.setItem(CFG_KEY, JSON.stringify(CFG)); }
 function saveData(){ localStorage.setItem(DATA_KEY, JSON.stringify(DATA)); }
-
-async function fetchJSON(url){
-  const res = await fetch(url, {cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  return await res.json();
-}
-
+async function fetchJSON(url){ const r = await fetch(url, {cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 async function loadRemote(){
-  const status = document.getElementById('load_status'); if(status) status.textContent = 'Lade...';
   try{
     if(CFG.configUrl){ DATA.config = await fetchJSON(CFG.configUrl); }
     if(CFG.newsUrl){ DATA.news = await fetchJSON(CFG.newsUrl); }
     DATA.ts = Date.now(); saveData();
-    if(status) status.textContent = 'Aktualisiert.';
     applyConfig(); renderNews();
-  }catch(e){
-    console.error(e);
-    if(status) status.textContent = 'Fehler beim Laden: ' + e.message;
-    alert('Fehler beim Laden: '+e.message);
+    alert('Aktualisiert.');
+  }catch(e){ alert('Fehler beim Laden: '+e.message); }
+}
+function applyConfig(){
+  const c = DATA.config; if(!c || !c.teams) return;
+  if(c.teams.A){
+    if(c.teams.A.table) document.querySelector('#teamA_tabelle iframe').src = c.teams.A.table;
+    if(c.teams.A.gamesAndRoster) document.querySelector('#teamA_spieltage_kader iframe').src = c.teams.A.gamesAndRoster;
+    if(c.teams.A.participants) document.querySelector('#teamA_gegner iframe').src = c.teams.A.participants;
+  }
+  if(c.teams.B){
+    if(c.teams.B.table) document.querySelector('#teamB_tabelle iframe').src = c.teams.B.table;
+    if(c.teams.B.gamesAndRoster) document.querySelector('#teamB_spieltage_kader iframe').src = c.teams.B.gamesAndRoster;
+    if(c.teams.B.participants) document.querySelector('#teamB_gegner iframe').src = c.teams.B.participants;
   }
 }
-
-function applyConfig(){
-  // If config has teams A/B links, update iframe srcs
-  try{
-    const c = DATA.config;
-    if(!c || !c.teams) return;
-    if(c.teams.A){
-      if(c.teams.A.table) document.querySelector('#teamA_tabelle iframe').src = c.teams.A.table;
-      if(c.teams.A.gamesAndRoster) document.querySelector('#teamA_spieltage_kader iframe').src = c.teams.A.gamesAndRoster;
-      if(c.teams.A.participants) document.querySelector('#teamA_gegner iframe').src = c.teams.A.participants;
-    }
-    if(c.teams.B){
-      if(c.teams.B.table) document.querySelector('#teamB_tabelle iframe').src = c.teams.B.table;
-      if(c.teams.B.gamesAndRoster) document.querySelector('#teamB_spieltage_kader iframe').src = c.teams.B.gamesAndRoster;
-      if(c.teams.B.participants) document.querySelector('#teamB_gegner iframe').src = c.teams.B.participants;
-    }
-  }catch(e){ console.warn('applyConfig warn', e); }
-}
-
 function renderNews(){
   const wrap = document.getElementById('news_list'); if(!wrap) return;
   const items = (DATA.news || []);
-  if(!items.length){ wrap.innerHTML = '<p>Keine News geladen.</p>'; return; }
+  if(!items.length){ wrap.innerHTML = '<p class="note">Keine News geladen.</p>'; return; }
   items.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
-  wrap.innerHTML = items.map(n=>`<div class="item" style="max-width:none">
+  wrap.innerHTML = items.map(n=>`
+    <div class="item" style="max-width:none;text-align:left">
       <div style="opacity:.8;font-size:12px">${n.date||''}</div>
-      <div style="font-weight:600;margin:4px 0">${n.title||''}</div>
-      <div>${(n.body||'').replace(/\n/g,'<br>')}</div>
+      <div style="font-weight:700;margin:4px 0">${n.title||''}</div>
+      <div>${(n.body||'').replace(/\\n/g,'<br>')}</div>
     </div>`).join('');
 }
-
-// Bind settings
+document.getElementById('refreshBtn').onclick = loadRemote;
 window.addEventListener('DOMContentLoaded', ()=>{
-  const cu = document.getElementById('cfg_url');
-  const nu = document.getElementById('news_url');
-  if(cu) cu.value = CFG.configUrl||'';
-  if(nu) nu.value = CFG.newsUrl||'';
-
-  const save = document.getElementById('save_urls');
-  if(save) save.onclick = ()=>{ CFG.configUrl = cu.value.trim(); CFG.newsUrl = nu.value.trim(); saveCfg(); alert('URLs gespeichert'); };
-
-  const load = document.getElementById('load_now');
-  if(load) load.onclick = loadRemote;
-
-  const refreshBtn = document.getElementById('refresh_btn');
-  if(refreshBtn) refreshBtn.onclick = loadRemote;
-
-  // Apply cached content on startup
-  applyConfig();
-  renderNews();
-  // Try to load remote (or local content/) immediately
-  loadRemote().catch(()=>{});
+  const cu = document.getElementById('cfg_url'), nu = document.getElementById('news_url');
+  if(cu) cu.value = CFG.configUrl||''; if(nu) nu.value = CFG.newsUrl||'';
+  const s = document.getElementById('save_urls');
+  if(s) s.onclick = ()=>{ CFG.configUrl = cu.value.trim(); CFG.newsUrl = nu.value.trim(); saveCfg(); alert('URLs gespeichert'); };
+  applyConfig(); renderNews();
 });
-</script>
 
+/* ---------- Double Training Logic ---------- */
+const storeKey='darts_trainer_store_v1';
+function loadStore(){ try{ return JSON.parse(localStorage.getItem(storeKey) || '{}'); }catch{ return {}; } }
+function saveStore(v){ localStorage.setItem(storeKey, JSON.stringify(v)); }
 
-<script>
-const UPLOAD_KEY='sf_upload_url_v1';
-function exportStats(){
-  try{
-    const blob = new Blob([localStorage.getItem('darts_trainer_store_v1')||'{}'], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'steelfighters_training_export_'+(new Date().toISOString().slice(0,10))+'.json';
-    a.click();
-  }catch(e){ alert('Export fehlgeschlagen: '+e.message); }
+let dbl = { total:0, left:0, hits:0, miss:0, history:[], target:'D20' };
+function updateUI(){
+  document.getElementById('dbl_left').textContent = dbl.left;
+  document.getElementById('dbl_hits').textContent = dbl.hits;
+  document.getElementById('dbl_miss').textContent = dbl.miss;
+  const rate = dbl.total ? Math.round(dbl.hits/dbl.total*100) : 0;
+  document.getElementById('dbl_rate').textContent = rate + '%';
+  document.getElementById('dbl_status').textContent =
+    dbl.total? `Ziel ${dbl.target} • ${dbl.total-dbl.left+1}./${dbl.total}` : 'Bereit.';
 }
-async function shareStats(){
-  try{
-    const data = localStorage.getItem('darts_trainer_store_v1')||'{}';
-    const file = new File([data], 'steelfighters_training_export.json', {type:'application/json'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:'Steelfighters Export', text:'Trainingsdaten'});
-    }else{
-      exportStats();
-      alert('Teilen wird nicht unterstützt. Die Datei wurde stattdessen heruntergeladen.');
-    }
-  }catch(e){ exportStats(); }
+function startDouble(){
+  const darts = parseInt(document.getElementById('dbl_darts').value,10);
+  const target = document.getElementById('dbl_target').value;
+  dbl = { total:darts, left:darts, hits:0, miss:0, history:[], target };
+  updateUI();
 }
-function saveUploadUrl(){
-  const url = document.getElementById('upload_url').value.trim();
-  localStorage.setItem(UPLOAD_KEY, url);
-  document.getElementById('upload_hint').textContent = url? 'Gespeichert: '+url : 'Kein Link gespeichert.';
+function press(hit){
+  if(dbl.left<=0) return;
+  dbl.history.push(hit?'H':'M');
+  hit ? dbl.hits++ : dbl.miss++;
+  dbl.left--;
+  updateUI();
 }
-function uploadNow(){
-  const url = localStorage.getItem(UPLOAD_KEY)||'';
-  if(!url){ alert('Bitte zuerst einen Upload-Link speichern.'); return; }
-  // Tipp: Vor Upload einmal exportieren, dann im Upload-Formular die Datei auswählen.
-  exportStats();
-  setTimeout(()=>{ window.open(url, '_blank'); }, 400);
+function undo(){
+  const last = dbl.history.pop(); if(!last) return;
+  last==='H'? dbl.hits-- : dbl.miss--;
+  dbl.left++;
+  updateUI();
 }
-window.addEventListener('DOMContentLoaded', ()=>{
-  const u = localStorage.getItem(UPLOAD_KEY)||'';
-  const input = document.getElementById('upload_url');
-  const hint = document.getElementById('upload_hint');
-  if(input){ input.value = u; }
-  if(hint){ hint.textContent = u? 'Gespeichert: '+u : 'Kein Link gespeichert.'; }
-  const imp = document.getElementById('import_json');
-  if(imp) imp.addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    try{
-      const text = await file.text();
-      const incoming = JSON.parse(text);
-      // Merge: concat arrays if exist
-      const current = JSON.parse(localStorage.getItem('darts_trainer_store_v1')||'{}');
-      const merged = {...current};
-      ['scoring','checkout','double','atc','scoringSessions','checkoutSessions','doubleSessions','atcSessions'].forEach(k=>{
-        const a = current[k]||[]; const b = incoming[k]||[]; merged[k] = [...a, ...b];
-      });
-      // Keep members union
-      const mem = new Set([...(current.members||[]), ...(incoming.members||[])]);
-      merged.members = Array.from(mem);
-      // Prefer current player/adminPin
-      merged.player = current.player||incoming.player||'';
-      merged.adminPin = current.adminPin||incoming.adminPin||'';
-      localStorage.setItem('darts_trainer_store_v1', JSON.stringify(merged));
-      alert('Import abgeschlossen. Daten wurden zusammengeführt.');
-    }catch(err){ alert('Import fehlgeschlagen: '+err.message); }
+function resetDouble(){
+  dbl = { total:0,left:0,hits:0,miss:0,history:[],target:'D20' };
+  updateUI();
+}
+function saveSession(){
+  if(dbl.total===0) return alert('Keine Session gestartet.');
+  const rate = dbl.total ? Math.round(dbl.hits/dbl.total*100) : 0;
+  const st = loadStore();
+  st.doubleSessions = st.doubleSessions || [];
+  st.doubleSessions.push({
+    ts: Date.now(), target: dbl.target, darts: dbl.total,
+    hits: dbl.hits, miss: dbl.miss, rate
   });
-});
+  saveStore(st);
+  alert('Session gespeichert.');
+}
+
+document.getElementById('dbl_start').onclick = startDouble;
+document.getElementById('dbl_btn_hit').onclick = ()=>press(true);
+document.getElementById('dbl_btn_miss').onclick = ()=>press(false);
+document.getElementById('dbl_undo').onclick = undo;
+document.getElementById('dbl_reset').onclick = resetDouble;
+document.getElementById('dbl_save').onclick = saveSession;
+updateUI();
+
+/* PWA SW */
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js')); }
 </script>
-
-
-<script>
-const API_CFG_KEY='sf_api_cfg_v1', API_QUEUE_KEY='sf_api_queue_v1';
-let API_CFG = JSON.parse(localStorage.getItem(API_CFG_KEY) || '{"url":"","auth":""}');
-function saveApiCfg(){ localStorage.setItem(API_CFG_KEY, JSON.stringify(API_CFG)); }
-function getQueue(){ try{ return JSON.parse(localStorage.getItem(API_QUEUE_KEY) || '[]'); }catch(e){ return []; } }
-function saveQueue(q){ localStorage.setItem(API_QUEUE_KEY, JSON.stringify(q)); }
-
-function buildPayload(){
-  const raw = JSON.parse(localStorage.getItem('darts_trainer_store_v1')||'{}');
-  const filename = 'steelfighters_'+(raw.player||'unbekannt')+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';
-  return { filename, player: raw.player||'', ts: Date.now(), data: raw };
-}
-async function tryUpload(item){
-  const url = API_CFG.url; if(!url) throw new Error('Keine API URL gesetzt');
-  const headers = {'Content-Type':'application/json'};
-  if(API_CFG.auth){ headers['Authorization'] = API_CFG.auth; }
-  const res = await fetch(url, { method:'POST', headers, body: JSON.stringify(item) });
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  return await res.text();
-}
-async function oneClickUpload(){
-  try{
-    const item = buildPayload();
-    await tryUpload(item);
-    alert('Upload erfolgreich ✓');
-  }catch(e){
-    // queue and inform
-    const q = getQueue(); q.push(buildPayload()); saveQueue(q);
-    alert('Kein Upload möglich (offline/Fehler). Wurde in die Warteschlange gelegt.');
-  }
-}
-async function flushQueue(){
-  let q = getQueue(); if(!q.length) return;
-  const remaining = [];
-  for(const item of q){
-    try{ await tryUpload(item); } catch(e){ remaining.push(item); }
-  }
-  saveQueue(remaining);
-}
-window.addEventListener('DOMContentLoaded', ()=>{
-  // settings init
-  const apiUrl = document.getElementById('api_url');
-  const apiAuth = document.getElementById('api_auth');
-  if(apiUrl) apiUrl.value = API_CFG.url||'';
-  if(apiAuth) apiAuth.value = API_CFG.auth||'';
-  const saveApi = document.getElementById('save_api');
-  if(saveApi) saveApi.onclick = ()=>{ API_CFG.url = apiUrl.value.trim(); API_CFG.auth = apiAuth.value.trim(); saveApiCfg(); alert('API gespeichert'); };
-
-  // Also bind refresh to flush queue in addition to loading remote content
-  const oldLoadRemote = window.loadRemote;
-  window.loadRemote = async function(){
-    try{ await flushQueue(); }catch(e){}
-    if(oldLoadRemote) return oldLoadRemote();
-  };
-  // try once on start
-  flushQueue().catch(()=>{});
-});
-</script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));}</script></body>
+</body>
 </html>
