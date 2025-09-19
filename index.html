@@ -25,6 +25,39 @@
     .h-right{ text-align:right; }
     .btn{ background:var(--accent); color:#fff; border:none; padding:10px 12px; border-radius:10px; cursor:pointer; }
     .ghost{ background:#1f2937; border:1px solid #374151; }
+    
+    /* Header */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #000;
+  display: grid;
+  grid-template-columns: 40px 1fr auto; /* Menü – Logo – Button */
+  align-items: center;
+  padding: 5px 10px;
+}
+
+.h-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+header img.header-logo {
+  height: 32px;   /* Logo-Höhe an Button anpassen */
+  object-fit: contain;
+  margin: 0 auto; /* mittig halten */
+}
+
+.h-title { text-align: center; font-weight: 700; }
+.h-right { text-align: right; }
+.btn { background: var(--accent); color:#fff; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; }
+.ghost { background:#1f2937; border:1px solid #374151; }
 
     /* Views */
     .content{ display:none; padding:18px; }
@@ -350,4 +383,5 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.s
 </body>
 
 </html>
+
 
